@@ -209,6 +209,7 @@ def main():
         if isinstance(record, dict) and 'tasks' in record and isinstance(record['tasks'], list):
             receipts += 1
             tasks_list = record['tasks']
+            all_str_tasks = all(isinstance(t, str) for t in tasks_list)
             bad_tasks += [f'{path.name}:{t}' for t in tasks_list if not isinstance(t, str) or t not in by_id]
             if not in_volunteers:
                 if 'mathlib' in record and record['mathlib'] != summary['mathlib_commit']:
@@ -223,6 +224,8 @@ def main():
             # and the full set of ids for a known claim.
             if 'packet' in record:
                 reviewed += 1
+                if not all_str_tasks:
+                    continue
                 claim = record['packet']
                 tasks = tasks_list
                 if len(set(tasks)) != len(tasks):

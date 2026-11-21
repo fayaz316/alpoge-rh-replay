@@ -121,5 +121,22 @@ class ValidateTrackerTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn('FAIL evidence.volunteers_tasks_present', result.stdout)
 
+    def test_unhashable_task_entry_reports_named_failure(self):
+        for bad_entry in (['M000001'], {'id': 'M000001'}):
+            with self.subTest(bad_entry=bad_entry), tempfile.TemporaryDirectory() as tmp:
+                copy = Path(tmp) / 'repo'
+                shutil.copytree(ROOT, copy,
+                                ignore=shutil.ignore_patterns('.git', '__pycache__'))
+                receipt_path = copy / RECEIPT
+                receipt = json.loads(receipt_path.read_text())
+                receipt['tasks'] = [bad_entry]
+                receipt_path.write_text(json.dumps(receipt))
+                result = run_validator(copy)
+                self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertEqual(result.stderr, '')
+                self.assertIn('FAIL evidence.volunteers_tasks_present', result.stdout)
+                self.assertIn('FAIL evidence.receipt_tasks_exist', result.stdout)
+                self.assertIn('FAILED:', result.stdout)
+
 if __name__ == '__main__':
     unittest.main()
